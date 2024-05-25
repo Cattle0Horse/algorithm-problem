@@ -35,9 +35,6 @@ public:
                 right.push(r++);
             }
         }
-        0123456789
-        qwertyuiopasdfghjklzxcvbnm, ./
-                                        QWERWETRERTYUYIIHKJGFDSZFFGCHVJBM,NBVCX
         return ans;
     }
 };
