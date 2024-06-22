@@ -1,5 +1,5 @@
 /**
- * @file leetcode3_181.cpp
+ * @file leetcode_3181.cpp
  * @author Cattle_Horse (CattleHorse@duck.com)
  * @brief https://leetcode.cn/problems/maximum-total-reward-using-operations-ii/description/
  * @version 0.1
@@ -19,7 +19,6 @@ public:
     int maxTotalReward(std::vector<int>& rewardValues) {
         std::sort(rewardValues.begin(), rewardValues.end());
         rewardValues.resize(std::unique(rewardValues.begin(), rewardValues.end()) - rewardValues.begin());
-        int n = rewardValues.size();
         constexpr static int N = 1e5;
         std::bitset<N + 1> set;
         set.set(0);
