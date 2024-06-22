@@ -10,6 +10,7 @@
  */
 
 #include <algorithm>
+#include <cstring>
 #include <functional>
 #include <vector>
 using namespace std;
@@ -21,11 +22,12 @@ private:
 public:
     int cherryPickup(vector<vector<int>>& grid) {
         int memo[N][N][N];
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                std::fill(memo[i][j], memo[i][j] + N, NONE);
-            }
-        }
+        // for (int i = 0; i < N; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         std::fill(memo[i][j], memo[i][j] + N, NONE);
+        //     }
+        // }
+        memset(memo, NONE, sizeof memo);
         int n = grid.size(), m = grid.front().size();
         std::function<int(int, int, int)> dfs = [&](int r, int c1, int c2) {
             if (r == n) {
@@ -46,9 +48,10 @@ public:
                     }
                 }
             }
-            ans += mx;
-            me = ans;
-            return ans;
+            // ans += mx;
+            // me = ans;
+            // return ans;
+            return me = ans + mx;
         };
         return dfs(0, 0, m - 1);
     }

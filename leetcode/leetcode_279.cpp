@@ -14,6 +14,25 @@
 #include <limits>
 #include <vector>
 
+class Solution2 {
+public:
+    constexpr static int INF = std::numeric_limits<int>::max();
+    // 完全背包
+    int numSquares(int n) {
+        std::vector<int> dp(n + 1, INF);
+        dp[0] = 0;
+        for (int i = 1; i * i <= n; ++i) {
+            int num = i * i;
+            for (auto x{num}; x <= n; ++x) {
+                if (dp[x - num] != INF) {
+                    dp[x] = std::min(dp[x], dp[x - num] + 1);
+                }
+            }
+        }
+        return dp[n];
+    }
+};
+
 class Solution {
 public:
     int numSquares(int n) {

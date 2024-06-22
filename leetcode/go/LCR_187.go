@@ -5,6 +5,7 @@
 package leetcode
 
 // TODO: can't understand the expression
+// 约瑟夫环
 func iceBreakingGame(num int, target int) (ans int) {
 
 	return
