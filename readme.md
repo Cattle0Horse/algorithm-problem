@@ -13,3 +13,7 @@ language: c++, golang
 2024-06-20:
 
 -   On June 16, 2024 weeks score updates, reached 1911 points, obtained the knight brand
+
+2024-07-04:
+
+- Some problems are starting to be solved online with python
