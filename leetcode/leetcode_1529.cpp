@@ -1,7 +1,7 @@
 /**
- * @file leetcode_1827.cpp
+ * @file leetcode_1529.cpp
  * @author Cattle_Horse (CattleHorse@duck.com)
- * @brief
+ * @brief https://leetcode.cn/problems/minimum-suffix-flips/description/
  * @version 0.1
  * @date 2024-07-04
  *
@@ -21,15 +21,12 @@ using namespace std;
 
 class Solution {
 public:
-    int minOperations(vector<int>& nums) {
-        int n = nums.size(), pre = nums[0];
+    // 从左至右翻转
+    int minFlips(string target) {
         int ans = 0;
-        for (auto i{1}; i < n; ++i) {
-            if (nums[i] <= pre) {
-                ans += pre + 1 - nums[i];
-                pre = pre + 1;
-            } else {
-                pre = nums[i];
+        for (char c : target) {
+            if ((c - '0') != (ans & 1)) {
+                ++ans;
             }
         }
         return ans;
