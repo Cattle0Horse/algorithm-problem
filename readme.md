@@ -17,3 +17,8 @@ language: c++, golang
 2024-07-04:
 
 - Some problems are starting to be solved online with python
+
+2024-07-06
+
+- finish all problem of leetcode biweekly competition([biweekly 134](https://leetcode.cn/contest/biweekly-contest-134/)) for the second time, th rank is 174/2411
+
