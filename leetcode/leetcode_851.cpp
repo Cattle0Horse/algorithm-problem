@@ -10,6 +10,7 @@
  */
 
 #include <deque>
+#include <utility>
 #ifdef OY_LOCAL
 #include <vector>
 #include <iostream>
@@ -37,8 +38,8 @@ struct Graph {
         edges.reserve(edge_size);
     }
     void addEdge(size_t from, size_t to, T w = T()) {
-        edges.emplace_back(to, w, head[from]);
-        head[from] = edges.size() - 1;
+        edges.emplace_back(to, w, std::exchange(head[from], edges.size()));
+        // head[from] = edges.size() - 1;
     }
     void addEdge2(size_t from, size_t to, T w = T()) {
         addEdge(from, to, w);
