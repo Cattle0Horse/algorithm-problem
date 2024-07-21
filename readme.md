@@ -22,3 +22,6 @@ language: c++, golang
 
 - finish all problem of leetcode biweekly competition([biweekly 134](https://leetcode.cn/contest/biweekly-contest-134/)) for the second time, th rank is 174/2411
 
+2024-07-21
+
+- leetcode has solved 1000 problems 🎈
