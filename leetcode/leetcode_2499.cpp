@@ -25,7 +25,6 @@ using namespace std;
 class Solution {
 public:
     long long makeSimilar(vector<int>& nums, vector<int>& target) {
-        int n = nums.size();
         std::ranges::sort(nums);
         std::ranges::sort(target);
         std::array<std::vector<int>, 2> tars{};
