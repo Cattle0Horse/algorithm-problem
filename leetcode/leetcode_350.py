@@ -2,6 +2,7 @@
 from ast import List
 from collections import Counter
 
+
 class Solution:
     def intersect(self, nums1: List[int], nums2: List[int]) -> List[int]:
         b = Counter(nums2)
@@ -10,5 +11,3 @@ class Solution:
             for _ in range(min(b[num], cnt)):
                 ans.append(num)
         return ans
-        
-        

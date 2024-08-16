@@ -2,9 +2,9 @@
 from typing import List
 
 
-'''
+"""
 (a^b % 10) ^ c % m = (a % 10 % m) ^ b % 10 % m
-'''
+"""
 
 
 class Solution:

@@ -14,5 +14,5 @@ class Solution:
                 mul //= nums[l]
                 l += 1
             # [l, r]
-            ans += r-l+1
+            ans += r - l + 1
         return ans

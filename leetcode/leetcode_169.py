@@ -14,6 +14,6 @@ class Solution:
                 hp = 1
             else:
                 hp += 1 if winner == num else -1
-        if nums.count(winner) > n//2:
+        if nums.count(winner) > n // 2:
             return winner
         return inf  # none

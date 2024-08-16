@@ -5,14 +5,14 @@ from typing import List
 
 class Solution:
     def minimumTime(self, n: int, edges: List[List[int]], disappear: List[int]) -> List[int]:
-        adj = [[]for _ in range(n)]
+        adj = [[] for _ in range(n)]
         for u, v, w in edges:
             adj[u].append((v, w))
             adj[v].append((u, w))
         distances, vis = [inf] * n, [False] * n
         distances[0] = 0
         q = [(0, 0)]
-        for _ in range(n-1):
+        for _ in range(n - 1):
             # pick the minimum node
             while q:
                 _, u = heapq.heappop(q)

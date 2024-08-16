@@ -15,23 +15,26 @@
 3. 如果我告诉他是unicode，没有字符范围，老老实实排序再判断是比较符合我对工程师的要求的，因为算法性能稳定，没有额外资源要求，一眼看出没什么不可预见的风险，100分。
 就是说，有些东西，没想到或者一时没想到根本不是问题，日常工作中稍微提示一下即可，但是缜密的思维对于程序员来说更重要。
 """
+
+
 # 如果只有26个字母
 def check26(s: str) -> bool:
     if len(s) > 26:
         return False
     mask = 0
     for c in s:
-        pos = ord(c) - ord('a')
+        pos = ord(c) - ord("a")
         if mask & (1 << pos):
             return False
         mask |= 1 << pos
     return True
 
+
 # 如果非常多(比如 unicode)
 def check(s: str) -> bool:
     arr = sorted(s)
     for i in range(1, len(arr)):
-        if arr[i] == arr[i-1]:
+        if arr[i] == arr[i - 1]:
             return False
     return True
 
