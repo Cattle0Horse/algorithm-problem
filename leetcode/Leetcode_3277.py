@@ -9,7 +9,7 @@ from typing import List
 class Solution:
     """
     区间[l, r]的异或值为 dp[l, r]，则：
-    dp[l, r] = dp[l+1, r], dp[l, r-1]
+    dp[l, r] = dp[l+1, r] ^ dp[l, r-1]
     区间[l, r]的所有子数组的最大异或值为 ans[l, r]，则
     ans[l, r] = max(dp[l, r], ans[l+1, r], ans[l, r-1])
 
