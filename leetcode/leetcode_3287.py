@@ -15,17 +15,15 @@ from typing import List
 """
 
 
-# bug: Wrong Answer
 def get_prefix(nums: List[int], k: int) -> List[set]:
-    # 前i个数中选k个数的或值
-    ans = [set()]
+    ans = [set() for _ in range(len(nums))]
     dp = [set() for _ in range(k + 1)]
     dp[0].add(0)
-    for num in nums:
+    for i, num in enumerate(nums):
         for j in range(k - 1, -1, -1):
             for v in dp[j]:
                 dp[j + 1].add(num | v)
-        ans.append(dp[k].copy())
+        ans[i] = dp[k].copy()
     return ans
 
 
@@ -36,11 +34,11 @@ class Solution:
         n = len(nums)
         ans = 0
         # 左边和右边都至少有k个数
-        for i in range(k, n - k + 1):
+        for i in range(k - 1, n - k):
             # 前i个数
             for x in prefix[i]:
                 # 后n-i个数
-                for y in suffix[n - i]:
+                for y in suffix[i + 1]:
                     ans = max(ans, x ^ y)
         return ans
 
