@@ -16,7 +16,7 @@ from typing import List
 
 
 def get_prefix(nums: List[int], k: int) -> List[set]:
-    ans = [set() for _ in range(len(nums))]
+    ans = [None] * len(nums)
     dp = [set() for _ in range(k + 1)]
     dp[0].add(0)
     for i, num in enumerate(nums):
