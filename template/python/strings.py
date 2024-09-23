@@ -1,5 +1,3 @@
-import random
-
 to_chr = lambda x, a="a": chr(x + ord(a))
 to_ord = lambda x, a="a": ord(x) - ord(a)
 
@@ -9,6 +7,8 @@ class StringHashSingle:
         """多项式字符串哈希
         哈希函数: hash(s) = s[0] * base^(n-1) + s[1] * base^(n-2) + ... + s[n-1]
         """
+        import random
+
         self.n = len(s)
         # self.base = random.randint(8 * 10**8, 9 * 10**8)
         # self.mod = random.getrandbits(64)
