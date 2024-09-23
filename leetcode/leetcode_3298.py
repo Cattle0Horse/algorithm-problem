@@ -41,6 +41,65 @@ class TargetNumber:
         return f"need = {self.need}, less = {self.less}"
 
 
+class SlideWindow:
+    def __init__(self, start: int, end: int) -> None:
+        self.start = start
+        self.end = end
+
+    def slide_base_left(self, check, acquire, release):
+        """
+        滑动窗口
+        返回以left为起点的最长的满足check条件的区间[left, right]及其数据
+        表示区间[left, right)均不满足check, [right, end)均满足check
+
+        check(left: int, right: int)-> bool: # 判断[left, right]窗口是否满足条件
+        acquire(right: int) -> None: # 获取对应下标的数据
+        release(left: int) -> None: # 释放对应下标的数据
+        """
+        right = self.start
+        for left in range(self.start, self.end):
+            # 向右扩展，直到不满足check
+            while right < self.end and check(left, right - 1):
+                acquire(right)
+                right += 1
+            yield left, right - 1
+            release(left)
+
+    def slide_base_right(self, check, acquire, release):
+        """
+        滑动窗口
+        返回以right为终点的最长的满足check条件的区间[left, right]及其数据
+        表示区间[start, left)均不满足check, [left, right]均满足check
+
+        check(left: int, right: int)-> bool: # 判断[left, right]窗口是否满足条件
+        acquire(right: int) -> None: # 获取对应下标的数据
+        release(left: int) -> None: # 释放对应下标的数据
+        """
+        left = self.start
+        for right in range(self.start, self.end):
+            acquire(right)
+            # 左边收缩，直到满足check
+            while left <= right and check(left, right):
+                release(left)
+                left += 1
+            yield left, right
+
+    def slide_fixed_length(self, acquire, release, length: int):
+        """
+        固定长度滑动窗口
+        返回每一个长度为length的区间
+        acquire(right: int) -> None: # 获取对应下标的数据
+        release(left: int) -> None: # 释放对应下标的数据
+        """
+        left = self.start
+        for right in range(self.start, self.end):
+            acquire(right)
+            if right - left + 1 == length:
+                yield left, right
+                release(left)
+                left += 1
+
+
 class Solution:
     """
     如果一个子字符串满足字符集合是word2的超集,那么左右任意扩展都是答案
@@ -49,11 +108,18 @@ class Solution:
 
     def validSubstringCount(self, word1: str, word2: str) -> int:
         need = TargetNumber(word2)
-        l, ans = 0, 0
-        for c in word1:
-            need.acquire(c)
-            while need.enough():
-                need.release(word1[l])
-                l += 1
-            ans += l
+        window = SlideWindow(0, len(word1))
+
+        def check(left: int, right: int) -> bool:
+            return need.enough()
+
+        def acquire(right: int) -> None:
+            need.acquire(word1[right])
+
+        def release(left: int) -> None:
+            need.release(word1[left])
+
+        ans = 0
+        for left, right in window.slide_base_right(check, acquire, release):
+            ans += left
         return ans
