@@ -1,6 +1,6 @@
 /**
  * @file tree_chain_v3.cpp
- * @author Cattle_Horse (1141754930@qq.com)
+ * @author Cattle_Horse (CattleHorse@duck.com)
  * @brief
  * @version 3.0
  * @date 2024-04-07

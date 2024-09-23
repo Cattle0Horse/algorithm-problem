@@ -1,6 +1,6 @@
 /**
  * @file tree_chain_v1.cpp
- * @author Cattle_Horse (1141754930@qq.com)
+ * @author Cattle_Horse (CattleHorse@duck.com)
  * @brief [1483. 树节点的第 K 个祖先](https://leetcode.cn/problems/kth-ancestor-of-a-tree-node/description/?envType=daily-question&envId=2024-04-06)
  * @version 1.1
  * @date 2024-04-05

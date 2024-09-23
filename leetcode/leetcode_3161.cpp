@@ -11,7 +11,7 @@
 
 /**
  * @file segment_tree.cpp
- * @author Cattle_Horse (cattle_horse@qq.com)
+ * @author Cattle_Horse (CattleHorse@duck.com)
  *
  * @brief  you need to implement two function and specify the type of value and the type of modification:
  * 1.(Function)merge       : It will combine the results of the two subsegment(Just like when you call the `query` method).

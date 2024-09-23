@@ -31,7 +31,7 @@ int notPrime[N + 1]{true, true};
 
 /**
  * @file union_find_v1.cpp
- * @author Cattle_Horse (1141754930@qq.com)
+ * @author Cattle_Horse (CattleHorse@duck.com)
  * @brief
  * @version 1.0
  * @date 2024-04-08
