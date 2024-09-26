@@ -1,7 +1,3 @@
-to_chr = lambda x, a="a": chr(x + ord(a))
-to_ord = lambda x, a="a": ord(x) - ord(a)
-
-
 class StringHashSingle:
     def __init__(self, s):
         """多项式字符串哈希
