@@ -35,6 +35,8 @@ isalpha = lambda x: x.isalpha()  # 字母
 is_lower_vowel = lambda x: x in lower_vowel
 is_upper_vowel = lambda x: x in upper_vowel
 isvowel = lambda x: x in vowel
+is_even = lambda x: x % 2 == 0
+is_odd = lambda x: x % 2 == 1
 
 """
 123    ↖↑↗
