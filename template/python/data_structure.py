@@ -1,4 +1,5 @@
-from collections import Counter
+import collections
+from typing import Generator
 
 
 class DSU:
@@ -106,7 +107,7 @@ class Trie:
     def __init__(self):
         self.root = TrieNode()
 
-    def insert(self, word):
+    def insert(self, word) -> bool:
         node = self.root
         for ch in word:
             if ch not in node.children:
@@ -114,7 +115,7 @@ class Trie:
             node = node.children[ch]
         node.is_end = True
 
-    def find_word(self, word):
+    def find_word(self, word) -> bool:
         node = self.root
         for ch in word:
             if ch not in node.children:
@@ -122,7 +123,7 @@ class Trie:
             node = node.children[ch]
         return node.is_end
 
-    def find_prefix(self, prefix):
+    def find_prefix(self, prefix) -> bool:
         node = self.root
         for ch in prefix:
             if ch not in node.children:
@@ -130,7 +131,7 @@ class Trie:
             node = node.children[ch]
         return True
 
-    def find(self, text, as_prefix=False):
+    def find(self, text, as_prefix=False) -> bool:
         node = self.root
         for ch in text:
             if ch not in node.children:
@@ -146,7 +147,7 @@ class TargetNumber:
     """
 
     def __init__(self, target: str | list) -> None:
-        self.need = Counter(target)
+        self.need = collections.Counter(target)
         self.less = len(self.need)
 
     def acquire(self, v, cnt: int = 1) -> None:
@@ -163,7 +164,7 @@ class TargetNumber:
         if before <= 0 and self.need[v] > 0:
             self.less += 1
 
-    def enough(self) -> None:
+    def enough(self) -> bool:
         """判断需要的字符是否足够"""
         return self.less == 0
 
@@ -178,54 +179,55 @@ class SlidingWindow:
         self.start = start
         self.end = end
 
-    def slide_base_left(self, check, acquire, release):
+    def slide_base_left(self, check, extend_right, shrink_left) -> Generator[tuple[int, int], None, None]:
         """
         返回以left为起点的最长的满足check条件的区间[left, right]
-        表示区间[left, right)均不满足check, [right, end)均满足check
+        表示区间[left, right]均满足check, (right, end)均不满足check
+        要求: 若区间[left, right]不满足check，则[left, right+1]也不满足check
 
         def check(left: int, right: int)-> bool: # 判断[left, right]窗口是否满足条件
-        def acquire(right: int) -> None: # 获取对应下标的数据
-        def release(left: int) -> None: # 释放对应下标的数据
+        def extend_right(right: int) -> None: # 扩展右边界
+        def shrink_left(left: int) -> None: # 收缩左边界
         """
         right = self.start
         for left in range(self.start, self.end):
-            # 向右扩展，直到不满足check
             while right < self.end and check(left, right - 1):
-                acquire(right)
+                extend_right(right)
                 right += 1
             yield left, right - 1
-            release(left)
+            shrink_left(left)
 
-    def slide_base_right(self, check, acquire, release):
+    def slide_base_right(self, check, extend_right, shrink_left) -> Generator[tuple[int, int], None, None]:
         """
         返回以right为终点的最长的满足check条件的区间[left, right]
         表示区间[start, left)均不满足check, [left, right]均满足check
+        要求: 若区间[left, right]满足check，则[left+1, right]也满足check
 
         def check(left: int, right: int)-> bool: # 判断[left, right]窗口是否满足条件
-        def acquire(right: int) -> None: # 获取对应下标的数据
-        def release(left: int) -> None: # 释放对应下标的数据
+        def extend_right(right: int) -> None: # 扩展右边界
+        def shrink_left(left: int) -> None: # 收缩左边界
         """
         left = self.start
         for right in range(self.start, self.end):
-            acquire(right)
-            # 左边收缩，直到满足check
-            while left <= right and check(left, right):
-                release(left)
+            extend_right(right)
+            while left <= right and not check(left, right):
+                shrink_left(left)
                 left += 1
             yield left, right
 
-    def slide_fixed_length(self, acquire, release, length: int):
+    def slide_fixed_length(self, check, length: int, show_all_window: bool = False) -> Generator[collections.deque, None, None]:
         """
-        固定长度滑动窗口
-        返回每一个长度为length的区间
+        固定长度滑动窗口(单调队列)，定长子数组区间查询
+        要求: 对于下标 i < j, 若满足 check(i, j), 则下标 i 将不会成为答案(即永远被 j 遮挡)
 
-        def acquire(right: int) -> None: # 获取对应下标的数据
-        def release(left: int) -> None: # 释放对应下标的数据
+        def check(i: int, j: int) -> bool: # 判断下标 i 是否会永远 j 遮挡
         """
-        left = self.start
+        q = collections.deque()
         for right in range(self.start, self.end):
-            acquire(right)
-            if right - left + 1 == length:
-                yield left, right
-                release(left)
-                left += 1
+            if q and right - q[0] + 1 > length:
+                q.popleft()
+            while q and check(q[-1], right):
+                q.pop()
+            q.append(right)
+            if show_all_window or right - self.start + 1 >= length:
+                yield q
