@@ -20,7 +20,7 @@ class MonotonicStack:
         self.start = start
         self.end = end
 
-    def before_index_generator(self, check: Callable[[int, int], bool]) -> Generator[int, None, list[int]]:
+    def before_index_generator(self, check: Callable[[int, int], bool]) -> Generator[tuple[int, int], None, list[int]]:
         """
         查找上一个满足check的元素
 
@@ -36,7 +36,7 @@ class MonotonicStack:
             stk.append(j)
         return stk
 
-    def after_index_generator(self, check: Callable[[int, int], bool]) -> Generator[int, None, list[int]]:
+    def after_index_generator(self, check: Callable[[int, int], bool]) -> Generator[tuple[int, int], None, list[int]]:
         """
         查找下一个满足check的元素
 
@@ -50,7 +50,7 @@ class MonotonicStack:
             stk.append(j)
         return stk
 
-    def before_index(self, check: Callable[[int, int], bool], initial: int = None) -> list[int]:
+    def before_index(self, check: Callable[[int, int], bool], initial: None | int = None) -> list[int]:
         """
         查找上一个满足check的元素
 
@@ -61,7 +61,7 @@ class MonotonicStack:
             ans[i - self.start] = j - self.start
         return ans
 
-    def after_index(self, check: Callable[[int, int], bool], initial: int = None) -> list[int]:
+    def after_index(self, check: Callable[[int, int], bool], initial: None | int = None) -> list[int]:
         """
         查找下一个满足check的元素
 

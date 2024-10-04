@@ -38,7 +38,7 @@ class Graph:
 
     def __init__(self, vertex_size: int, END_INDEX: int = 10**8, INF: int | float = math.inf) -> None:
         self.vertex_size: int = vertex_size
-        self.head: int = [END_INDEX] * vertex_size
+        self.head: list[int] = [END_INDEX] * vertex_size
         self.edges: list[EdgeType] = []
         self.next: list[int] = []
         self.END_INDEX: int = END_INDEX

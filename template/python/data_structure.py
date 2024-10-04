@@ -1,5 +1,5 @@
 import collections
-from typing import Callable, Generator
+from typing import Callable, Generator, Generic, TypeVar
 
 
 class DSU:
@@ -94,7 +94,7 @@ class DSU:
         return groups
 
     def __repr__(self) -> str:
-        return str(self.parent)
+        return f"DSU({self.parent})"
 
 
 class TrieNode:
@@ -107,7 +107,7 @@ class Trie:
     def __init__(self):
         self.root = TrieNode()
 
-    def insert(self, word) -> bool:
+    def insert(self, word) -> None:
         node = self.root
         for ch in word:
             if ch not in node.children:
@@ -115,7 +115,7 @@ class Trie:
             node = node.children[ch]
         node.is_end = True
 
-    def find_word(self, word) -> bool:
+    def search(self, word) -> bool:
         node = self.root
         for ch in word:
             if ch not in node.children:
@@ -123,21 +123,13 @@ class Trie:
             node = node.children[ch]
         return node.is_end
 
-    def find_prefix(self, prefix) -> bool:
+    def starts_with(self, prefix) -> bool:
         node = self.root
         for ch in prefix:
             if ch not in node.children:
                 return False
             node = node.children[ch]
         return True
-
-    def find(self, text, as_prefix=False) -> bool:
-        node = self.root
-        for ch in text:
-            if ch not in node.children:
-                return False
-            node = node.children[ch]
-        return as_prefix or node.is_end
 
 
 class TargetNumber:
@@ -229,7 +221,7 @@ class SlidingWindow:
 
         def check(i: int, j: int) -> bool: # 判断下标 i 是否会永远 j 遮挡
         """
-        q = collections.deque()
+        q: collections.deque = collections.deque()
         for right in range(self.start, self.end):
             if q and right - q[0] + 1 > length:
                 q.popleft()
@@ -254,13 +246,13 @@ class MonotonicStack:
         self.start = start
         self.end = end
 
-    def before_index_generator(self, check: Callable[[int, int], bool]) -> Generator[int, None, list[int]]:
+    def before_index_generator(self, check: Callable[[int, int], bool]) -> Generator[tuple[int, int], None, list[int]]:
         """
         查找上一个满足check的元素，可以在生成器生成所有元素后，通过next方法并捕获StopIteration异常来获取剩余栈内元素
 
         def check(i: int, j: int) -> bool: # 对于 i < j 是否满足条件
         """
-        stk = []
+        stk: list[int] = []
         for j in range(self.start, self.end):
             while stk and not check(stk[-1], j):
                 stk.pop()
@@ -270,13 +262,13 @@ class MonotonicStack:
             stk.append(j)
         return stk
 
-    def after_index_generator(self, check: Callable[[int, int], bool]) -> Generator[int, None, list[int]]:
+    def after_index_generator(self, check: Callable[[int, int], bool]) -> Generator[tuple[int, int], None, list[int]]:
         """
         查找下一个满足check的元素，可以在生成器生成所有元素后，通过next方法并捕获StopIteration异常来获取剩余栈内元素素
 
         def check(i: int, j: int) -> bool: # 对于 i < j 是否满足条件
         """
-        stk = []
+        stk: list[int] = []
         for j in range(self.start, self.end):
             # 栈内元素遇到了第一个满足条件的元素(出栈)
             while stk and check(stk[-1], j):
@@ -284,7 +276,7 @@ class MonotonicStack:
             stk.append(j)
         return stk
 
-    def before_index(self, check: Callable[[int, int], bool], initial: int = None) -> list[int]:
+    def before_index(self, check: Callable[[int, int], bool], initial: None | int = None) -> list[None | int]:
         """
         查找上一个满足check的元素
 
@@ -295,7 +287,7 @@ class MonotonicStack:
             ans[i - self.start] = j - self.start
         return ans
 
-    def after_index(self, check: Callable[[int, int], bool], initial: int = None) -> list[int]:
+    def after_index(self, check: Callable[[int, int], bool], initial: None | int = None) -> list[None | int]:
         """
         查找下一个满足check的元素
 
@@ -305,3 +297,411 @@ class MonotonicStack:
         for i, j in self.after_index_generator(check):
             ans[i - self.start] = j - self.start
         return ans
+
+
+"""
+ZKW线段树、非递归线段树:
+1. 若管理长度为n的数组, 那么线段树长度为2n(下标0不使用), 区间数据为[1, n-1], 原数组数据为[n, 2n-1]
+2. 对于基础线段树可以像区间查询一样进行区间修改, 然后可以累加直至根路径上的节点值进行单点查询, 但支持的区间操作有限
+"""
+
+
+CoverType = TypeVar("CoverType")
+TagType = TypeVar("TagType")
+
+
+class SegmentTree(Generic[CoverType]):
+    """基础非递归线段树
+    支持单点修改、区间询问
+    """
+
+    __slots__ = ("size", "combine", "cover_initial", "cover")
+
+    def __init__(self, size: int, combine: Callable[[CoverType, CoverType], CoverType], cover_initial: CoverType) -> None:
+        """初始化线段树
+        size: 原数组最大长度(预分配内存，构建逻辑在build方法中)
+        combine: 用于合并左右子节点的值，这决定了询问时的结果
+        initial: 初始值
+        """
+        self.size = size
+        self.combine = combine
+        self.cover_initial = cover_initial
+        self.cover = [cover_initial] * (2 * self.size)
+
+    @property
+    def data(self) -> list[CoverType]:
+        """获取叶子节点(原数组)"""
+        return self.cover[self.size :]
+
+    @data.setter
+    def data(self, nums: list[CoverType]):
+        """设置叶子节点(原数组)
+        在设置后，应调用build方法才能继续使用该数据结构
+        """
+        # assert len(nums) >= self.size
+        for i in range(self.size):
+            self.cover[i + self.size] = nums[i]
+
+    def build(self, nums: None | list[CoverType] = None):
+        """自底向上建树，可指定叶子节点数组"""
+        if nums:
+            # assert len(nums) >= self.size
+            for i in range(self.size):
+                self.cover[i + self.size] = nums[i]
+        for i in range(self.size - 1, 0, -1):
+            self.cover[i] = self.combine(self.cover[i << 1], self.cover[i << 1 | 1])
+
+    def push_up(self, index: int):
+        """从index向上更新节点值"""
+        while index > 1:
+            index >>= 1
+            self.cover[index] = self.combine(self.cover[index << 1], self.cover[index << 1 | 1])
+
+    def single_update_by_combine(self, index: int, func: Callable[[CoverType], CoverType]):
+        """单点修改, 逐步向上合并子节点"""
+        index += self.size
+        self.cover[index] = func(self.cover[index])
+        self.push_up(index)
+
+    def single_update_by_func(self, index: int, func: Callable[[CoverType], CoverType]):
+        """单点修改, 修改父节点直至根节点"""
+        index += self.size
+        while index > 0:
+            self.cover[index] = func(self.cover[index])
+            index >>= 1
+
+    def single_query(self, index: int) -> CoverType:
+        return self.cover[index + self.size]
+
+    def range_query(self, left: int, right: int) -> CoverType:
+        """区间查询, [left, right)"""
+        ans_left = ans_right = self.cover_initial
+        left += self.size
+        right += self.size
+        while left < right:
+            if left & 1:  # left是右节点, 则记录答案并且移动至右侧父节点
+                ans_left = self.combine(ans_left, self.cover[left])
+                left += 1
+            if right & 1:  # right是左节点, 则记录答案并移动至左侧父节点
+                right -= 1
+                ans_right = self.combine(self.cover[right], ans_right)
+            left >>= 1
+            right >>= 1
+        return self.combine(ans_left, ans_right)
+
+    def all_query(self) -> CoverType:
+        """区间询问，返回整个区间的值"""
+        return self.cover[1]
+
+    def __repr__(self) -> str:
+        return f"SegmentTree({self.cover})"
+
+
+class LazySegmentTree(Generic[CoverType, TagType]):
+    """懒标记线段树
+    支持区间修改、区间查询
+    """
+
+    def __init__(
+        self,
+        size: int,
+        combine: Callable[[CoverType, CoverType], CoverType],
+        cover_initial: CoverType,
+        tag_initial: TagType,
+        merge_cover_tag: Callable[[CoverType, TagType], CoverType],
+        merge_tag_tag: Callable[[TagType, TagType], TagType],
+    ) -> None:
+        """初始化线段树
+        size: 原数组最大长度(预分配内存，构建逻辑在build方法中)
+        combine: 用于合并左右子节点的值，这决定了询问时的结果
+        cover_initial: 树节点初始值
+        tag_initial: 标记初始值
+        merge_cover_tag: 标记合并至节点(用于标记下传)
+        merge_tag_tag: 合并两个标记(用于标记下传)
+        h: 树深度(用于快速查找一个节点的到根节点的路径, 自上而下的下传标记, 从0计数)
+        """
+        self.size = size
+        self.combine = combine
+        self.cover_initial = cover_initial
+        self.cover = [cover_initial] * (2 * size)
+        self.tag_initial = tag_initial
+        self.merge_cover_tag = merge_cover_tag
+        self.merge_tag_tag = merge_tag_tag
+        self.lazy_tag = [tag_initial] * (2 * size)
+        self.h = 0
+        while (1 << self.h) < size:
+            self.h += 1
+
+    @property
+    def data(self) -> list[CoverType]:
+        """获取叶子节点(原数组)"""
+        return self.cover[self.size :]
+
+    @data.setter
+    def data(self, nums: list[CoverType]):
+        """设置叶子节点(原数组)
+        在设置后，应调用build方法才能继续使用该数据结构
+        """
+        # assert len(nums) >= self.size
+        for i in range(self.size):
+            self.cover[i + self.size] = nums[i]
+
+    def build(self, nums: None | list[CoverType] = None):
+        """自底向上建树，可指定叶子节点数组"""
+        if nums:
+            # assert len(nums) >= self.size
+            for i in range(self.size):
+                self.cover[i + self.size] = nums[i]
+        for i in range(self.size - 1, 0, -1):
+            self.cover[i] = self.combine(self.cover[i << 1], self.cover[i << 1 | 1])
+
+    def propagate_tag(self, index: int, tag: TagType) -> None:
+        """传播标记至节点index"""
+        self.cover[index] = self.merge_cover_tag(self.cover[index], tag)
+        self.lazy_tag[index] = self.merge_tag_tag(tag, self.lazy_tag[index])
+
+    def push_up(self, index: int) -> None:
+        """从index向上更新节点值"""
+        while index > 1:
+            index >>= 1
+            self.cover[index] = self.combine(self.cover[index << 1], self.cover[index << 1 | 1])
+
+    def push_down(self, index) -> None:
+        """从根节点下放标记直至index"""
+        for s in range(self.h, 0, -1):
+            i = index >> s
+            if self.lazy_tag[i] != self.tag_initial:
+                self.propagate_tag(i << 1, self.lazy_tag[i])
+                self.propagate_tag(i << 1 | 1, self.lazy_tag[i])
+                self.lazy_tag[i] = self.tag_initial
+        # 叶子节点的tag不会再传播了, 不用处理
+        # if self.lazy_tag[index] != self.tag_initial:
+        #     if (index << 1) < 2 * self.size:
+        #         self.propagate_tag(index << 1, self.lazy_tag[index])
+        #     if (index << 1 | 1) < 2 * self.size:
+        #         self.propagate_tag(index << 1 | 1, self.lazy_tag[index])
+        #     self.lazy_tag[index] = self.tag_initial
+
+    def push_down_all_tag(self) -> None:
+        """下放所有标记，执行后可访问data查询数组值"""
+        for i in range(1, self.size):
+            if self.lazy_tag[i] != self.tag_initial:
+                self.propagate_tag(i << 1, self.lazy_tag[i])
+                self.propagate_tag(i << 1 | 1, self.lazy_tag[i])
+                self.lazy_tag[i] = self.tag_initial
+
+    def single_update(self, index: int, tag: TagType) -> None:
+        """单点更新"""
+        index += self.size
+        self.push_down(index)
+        self.propagate_tag(index, tag)
+        self.push_up(index)
+
+    def range_update(self, left: int, right: int, tag: TagType) -> None:
+        """区间更新, [left, right)"""
+        left += self.size
+        right += self.size
+        self.push_down(left)
+        self.push_down(right - 1)
+        l, r = left, right
+        while l < r:
+            if l & 1:
+                self.propagate_tag(l, tag)
+                l += 1
+            if r & 1:
+                r -= 1
+                self.propagate_tag(r, tag)
+            l >>= 1
+            r >>= 1
+        self.push_down(left)
+        self.push_down(right - 1)
+        self.push_up(left)
+        self.push_up(right - 1)
+
+    def single_query(self, index: int) -> CoverType:
+        """单点查询"""
+        index += self.size
+        self.push_down(index)
+        return self.cover[index]
+
+    def range_query(self, left: int, right: int) -> CoverType:
+        """区间查询, [left, right)"""
+        ans_left = ans_right = self.cover_initial
+        left += self.size
+        right += self.size
+        self.push_down(left)
+        self.push_down(right - 1)
+        while left < right:
+            if left & 1:
+                ans_left = self.combine(ans_left, self.cover[left])
+                left += 1
+            if right & 1:
+                right -= 1
+                ans_right = self.combine(self.cover[right], ans_right)
+            left >>= 1
+            right >>= 1
+        return self.combine(ans_left, ans_right)
+
+    def all_query(self) -> CoverType:
+        """区间询问，返回整个区间的值"""
+        return self.cover[1]
+
+    def __repr__(self) -> str:
+        return f"SegmentTree(cover: {self.cover}, lazy_tag: {self.lazy_tag})"
+
+
+class LazySegmentTreeWithLength(Generic[CoverType, TagType]):
+    """懒标记线段树(包含区间长度信息)
+    支持区间修改、区间查询
+    """
+
+    def __init__(
+        self,
+        size: int,
+        combine: Callable[[CoverType, CoverType], CoverType],
+        cover_initial: CoverType,
+        tag_initial: TagType,
+        merge_cover_tag: Callable[[CoverType, TagType, int], CoverType],
+        merge_tag_tag: Callable[[TagType, TagType], TagType],
+    ) -> None:
+        """初始化线段树
+        size: 原数组最大长度(预分配内存，构建逻辑在build方法中)
+        combine: 用于合并左右子节点的值，这决定了询问时的结果
+        cover_initial: 树节点初始值
+        tag_initial: 标记初始值
+        merge_cover_tag: 标记合并至节点(用于标记下传)
+        merge_tag_tag: 合并两个标记(用于标记下传)
+        h: 树深度(用于快速查找一个节点的到根节点的路径, 自上而下的下传标记, 从0计数)
+        length: 节点管理原数组的数据个数(为了支持与区间长度有关的操作)
+        """
+        self.size = size
+        self.combine = combine
+        self.cover_initial = cover_initial
+        self.cover = [cover_initial] * (2 * size)
+        self.tag_initial = tag_initial
+        self.merge_cover_tag = merge_cover_tag
+        self.merge_tag_tag = merge_tag_tag
+        self.lazy_tag = [tag_initial] * (2 * size)
+        self.h = 0
+        while (1 << self.h) < size:
+            self.h += 1
+        self.length = [1] * (2 * size)
+        for i in range(size - 1, 0, -1):
+            self.length[i] = self.length[i << 1] + self.length[i << 1 | 1]
+
+    @property
+    def data(self) -> list[CoverType]:
+        """获取叶子节点(原数组)"""
+        return self.cover[self.size :]
+
+    @data.setter
+    def data(self, nums: list[CoverType]):
+        """设置叶子节点(原数组)
+        在设置后，应调用build方法才能继续使用该数据结构
+        """
+        # assert len(nums) >= self.size
+        for i in range(self.size):
+            self.cover[i + self.size] = nums[i]
+
+    def build(self, nums: None | list[CoverType] = None):
+        """自底向上建树，可指定叶子节点数组"""
+        if nums:
+            # assert len(nums) >= self.size
+            for i in range(self.size):
+                self.cover[i + self.size] = nums[i]
+        for i in range(self.size - 1, 0, -1):
+            self.cover[i] = self.combine(self.cover[i << 1], self.cover[i << 1 | 1])
+
+    def propagate_tag(self, index: int, tag: TagType) -> None:
+        """传播标记至节点index"""
+        self.cover[index] = self.merge_cover_tag(self.cover[index], tag, self.length[index])
+        self.lazy_tag[index] = self.merge_tag_tag(tag, self.lazy_tag[index])
+
+    def push_up(self, index: int) -> None:
+        """从index向上更新节点值"""
+        while index > 1:
+            index >>= 1
+            self.cover[index] = self.combine(self.cover[index << 1], self.cover[index << 1 | 1])
+
+    def push_down(self, index) -> None:
+        """从根节点下放标记直至index"""
+        for s in range(self.h, 0, -1):
+            i = index >> s
+            if self.lazy_tag[i] != self.tag_initial:
+                self.propagate_tag(i << 1, self.lazy_tag[i])
+                self.propagate_tag(i << 1 | 1, self.lazy_tag[i])
+                self.lazy_tag[i] = self.tag_initial
+        # 叶子节点的tag不会再传播了, 不用处理
+        # if self.lazy_tag[index] != self.tag_initial:
+        #     if (index << 1) < 2 * self.size:
+        #         self.propagate_tag(index << 1, self.lazy_tag[index])
+        #     if (index << 1 | 1) < 2 * self.size:
+        #         self.propagate_tag(index << 1 | 1, self.lazy_tag[index])
+        #     self.lazy_tag[index] = self.tag_initial
+
+    def push_down_all_tag(self) -> None:
+        """下放所有标记，执行后可访问data查询数组值"""
+        for i in range(1, self.size):
+            if self.lazy_tag[i] != self.tag_initial:
+                self.propagate_tag(i << 1, self.lazy_tag[i])
+                self.propagate_tag(i << 1 | 1, self.lazy_tag[i])
+                self.lazy_tag[i] = self.tag_initial
+
+    def single_update(self, index: int, tag: TagType) -> None:
+        """单点更新"""
+        index += self.size
+        self.push_down(index)
+        self.propagate_tag(index, tag)
+        self.push_up(index)
+
+    def range_update(self, left: int, right: int, tag: TagType) -> None:
+        """区间更新, [left, right)"""
+        left += self.size
+        right += self.size
+        self.push_down(left)
+        self.push_down(right - 1)
+        l, r = left, right
+        while l < r:
+            if l & 1:
+                self.propagate_tag(l, tag)
+                l += 1
+            if r & 1:
+                r -= 1
+                self.propagate_tag(r, tag)
+            l >>= 1
+            r >>= 1
+        self.push_down(left)
+        self.push_down(right - 1)
+        self.push_up(left)
+        self.push_up(right - 1)
+
+    def single_query(self, index: int) -> CoverType:
+        """单点查询"""
+        index += self.size
+        self.push_down(index)
+        return self.cover[index]
+
+    def range_query(self, left: int, right: int) -> CoverType:
+        """区间查询, [left, right)"""
+        ans_left = ans_right = self.cover_initial
+        left += self.size
+        right += self.size
+        self.push_down(left)
+        self.push_down(right - 1)
+        while left < right:
+            if left & 1:
+                ans_left = self.combine(ans_left, self.cover[left])
+                left += 1
+            if right & 1:
+                right -= 1
+                ans_right = self.combine(self.cover[right], ans_right)
+            left >>= 1
+            right >>= 1
+        return self.combine(ans_left, ans_right)
+
+    def all_query(self) -> CoverType:
+        """区间询问，返回整个区间的值"""
+        return self.cover[1]
+
+    def __repr__(self) -> str:
+        return f"SegmentTree(cover: {self.cover}, lazy_tag: {self.lazy_tag})"

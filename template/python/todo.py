@@ -1,7 +1,10 @@
 r"""
+# todo: 线段树二分
 https://codeforces.com/blog/entry/18051
 https://blog.csdn.net/liuliangcan/article/details/128703213
 https://github.com/amomorning/algorithm-py/blob/master/template/data_structures.py
+https://github.com/liupengsay/PyIsTheBestLang/blob/main/src/data_structure/zkw_segment_tree/template.py
+https://www.bilibili.com/video/BV1gy4y1D7dx/
 非递归线段树:
 是一颗完全二叉树，它是自下而上计算的
 若原数组有n个节点，则线段树有2n-1个节点(0号下标不使用，共2n个空间)
@@ -30,7 +33,6 @@ https://github.com/amomorning/algorithm-py/blob/master/template/data_structures.
 """
 
 import operator
-import unittest
 
 
 class SegmentTree:
@@ -218,7 +220,8 @@ print(seg.range_query(1, 3))
 
 
 class LazySegmentTree:
-    # 闭区间范围操作
+    """闭区间范围操作"""
+
     def __init__(self, n, combine, cover_initial, merge_cover, merge_tag, tag_initial, num_to_cover):
         self.n = n
         self.combine = combine  # method of cover push_up
@@ -228,26 +231,26 @@ class LazySegmentTree:
         self.tag_initial = tag_initial  # cover_initial value of tag
         self.num_to_cover = num_to_cover  # cover_initial value from num to cover
         self.lazy_tag = [self.tag_initial] * (2 * self.n)
-        self.h = 0  # 用于快速找到上层节点，自上而下的push_down
+        self.h = 0  # 树的高度-1, 用于快速找到上层节点，自上而下的push_down
         while (1 << self.h) < n:
             self.h += 1
         self.cover = [self.cover_initial] * (2 * self.n)
-        self.cnt = [1] * (2 * self.n)
+        self.cnt = [1] * (2 * self.n)  # 管理的数组数据个数, 即子树叶子节点个数
         for i in range(self.n - 1, 0, -1):
-            self.cnt[i] = self.cnt[i << 1] + self.cnt[i << i | 1]
+            self.cnt[i] = self.cnt[i << 1] + self.cnt[(i << 1) | 1]
         return
 
     def build(self, nums):
         for i in range(self.n):
             self.cover[i + self.n] = self.num_to_cover(nums[i])
         for i in range(self.n - 1, 0, -1):
-            self.cover[i] = self.combine(self.cover[i << 1], self.cover[i << i | 1])
+            self.cover[i] = self.combine(self.cover[i << 1], self.cover[(i << 1) | 1])
         return
 
     def push_up(self, i):
         while i > 1:
             i >>= 1
-            self.cover[i] = self.combine(self.cover[i << 1], self.cover[i << i | 1])
+            self.cover[i] = self.combine(self.cover[i << 1], self.cover[(i << 1) | 1])
         return
 
     def push_down(self, i):
@@ -255,14 +258,14 @@ class LazySegmentTree:
             x = i >> s
             if self.lazy_tag[x] != self.tag_initial:
                 self.make_tag(x << 1, self.lazy_tag[x])
-                self.make_tag(x << 1 | 1, self.lazy_tag[x])
+                self.make_tag((x << 1) | 1, self.lazy_tag[x])
                 self.lazy_tag[x] = self.tag_initial
         x = i
         if self.lazy_tag[x] != self.tag_initial:
-            if i << i < self.n * 2:
+            if (i << 1) < self.n * 2:
                 self.make_tag(x << 1, self.lazy_tag[x])
-            if (i << i | 1) < self.n * 2:
-                self.make_tag(x << 1 | 1, self.lazy_tag[x])
+            if ((i << 1) | 1) < self.n * 2:
+                self.make_tag((x << 1) | 1, self.lazy_tag[x])
             self.lazy_tag[x] = self.tag_initial
         return
 
@@ -297,7 +300,7 @@ class LazySegmentTree:
         for i in range(1, self.n):
             if self.lazy_tag[i] != self.tag_initial:
                 self.make_tag(i << 1, self.lazy_tag[i])
-                self.make_tag(i << i | 1, self.lazy_tag[i])
+                self.make_tag((i << 1) | 1, self.lazy_tag[i])
                 self.lazy_tag[i] = self.tag_initial
         return self.cover[self.n :]
 
@@ -349,13 +352,13 @@ class LazySegmentTreeLength:
             else:
                 self.cover[i + self.n] = (-1, -1, 1, 0, 1, 0)
         for i in range(self.n - 1, 0, -1):
-            self.cover[i] = self.combine_cover(self.cover[i << 1], self.cover[i << i | 1])
+            self.cover[i] = self.combine_cover(self.cover[i << 1], self.cover[(i << 1) | 1])
         return
 
     def push_up(self, i):
         while i > 1:
             i >>= 1
-            self.cover[i] = self.combine_cover(self.cover[i << 1], self.cover[i << i | 1])
+            self.cover[i] = self.combine_cover(self.cover[i << 1], self.cover[(i << 1) | 1])
         return
 
     def push_down(self, i):
@@ -363,14 +366,14 @@ class LazySegmentTreeLength:
             x = i >> s
             if self.lazy_tag[x] != self.tag_initial:
                 self.make_tag(x << 1, self.lazy_tag[x])
-                self.make_tag(x << 1 | 1, self.lazy_tag[x])
+                self.make_tag((x << 1) | 1, self.lazy_tag[x])
                 self.lazy_tag[x] = self.tag_initial
         x = i
         if self.lazy_tag[x] != self.tag_initial:
-            if i << i < self.n * 2:
+            if (i << 1) < self.n * 2:
                 self.make_tag(x << 1, self.lazy_tag[x])
-            if (i << i | 1) < self.n * 2:
-                self.make_tag(x << 1 | 1, self.lazy_tag[x])
+            if ((i << 1) | 1) < self.n * 2:
+                self.make_tag((x << 1) | 1, self.lazy_tag[x])
             self.lazy_tag[x] = self.tag_initial
         return
 
@@ -406,7 +409,7 @@ class LazySegmentTreeLength:
         for i in range(1, self.n):
             if self.lazy_tag[i] != self.tag_initial:
                 self.make_tag(i << 1, self.lazy_tag[i])
-                self.make_tag(i << i | 1, self.lazy_tag[i])
+                self.make_tag((i << 1) | 1, self.lazy_tag[i])
                 self.lazy_tag[i] = self.tag_initial
         return self.cover[self.n :]
 
@@ -437,5 +440,5 @@ class LazySegmentTreeLength:
 
 
 if __name__ == "__main__":
-    # unittest.main()
-    pass
+    arr = [1, 2, 3]
+    seg = LazySegmentTree(len(arr), None, None, None, None, None, None)
