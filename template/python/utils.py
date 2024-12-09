@@ -58,3 +58,26 @@ direction_map = {
 
 def get_directions(s: str) -> list[tuple[int, int]]:
     return [direction_map[x] for x in s]
+
+
+"""
+x8x1x
+7xxx2
+xx0xx
+6xxx3
+x5x4x
+"""
+knight_direction_map = {
+    "1": (-2, 1),
+    "2": (-1, 2),
+    "3": (1, 2),
+    "4": (2, 1),
+    "5": (2, -1),
+    "6": (1, -2),
+    "7": (-1, -2),
+    "8": (-2, -1),
+}
+
+
+def get_knight_directions(s: str) -> list[tuple[int, int]]:
+    return [knight_direction_map[x] for x in s]
